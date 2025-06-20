@@ -22,7 +22,7 @@ export const register = asyncHandler(async (req, res, next) => {
     // create user + hash password (using hash password hook)
     await User.create({ ...req.body });
     // create confirmationLink
-    const confirmationLink = `http://localhost:3000/auth/activate_account/${token}`;
+    const confirmationLink = `https://diagnosys-backend-nine.vercel.app/auth/activate_account/${token}`;
     // send email
     const messageSent = await sendEmail({
         to: email,
@@ -46,7 +46,7 @@ export const activateAccount = asyncHandler(async (req, res, next) => {
     if (!user)
         return next(new Error("user not found!", { cause: 404 }));
     // send response
-    return res.redirect('http://localhost:5173');
+    return res.redirect('https://diagno-sys-cr4n.vercel.app/login');
 });
 
 // Login

@@ -35,6 +35,13 @@ router.delete(
   patientController.deletePatient
 );
 
+// get patient and examinations by national id
+router.get(
+  "/info",
+  validation(patientSchema.getPatientByNationalId),
+  patientController.getPatientByNationalId
+);
+
 // get all patients and search by name, national id, or phone
 router.get(
   "/",

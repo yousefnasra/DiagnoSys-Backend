@@ -1,5 +1,6 @@
 import joi from "joi";
 import { ObjectIdValidation } from "../../middleware/validation.middleware.js";
+import e from "express";
 
 // List of valid Egyptian governorate codes and names
 const validGovernorateCodes = [
@@ -114,6 +115,35 @@ export const updatePatient = joi.object({
   // deletePatient
 export const deletePatient = joi.object({
     id: joi.string().custom(ObjectIdValidation).required(),
+  }).required();
+
+// get patient and examinations by national id
+export const getPatientByNationalId = joi.object({
+    nationalId: joi.string().length(14).pattern(/^[23]\d{13}$/) // First digit must be 2 or 3, followed by 13 digits
+    .custom((value, helpers) => {
+      // Extract components of the national ID
+      const century = value[0];
+      const year = parseInt(value.slice(1, 3), 10);
+      const month = parseInt(value.slice(3, 5), 10);
+      const day = parseInt(value.slice(5, 7), 10);
+      const governorate = value.slice(7, 9);
+      // Validate the date of birth
+      const fullYear = (century === "2" ? 1900 : 2000) + year;
+      const date = new Date(fullYear, month - 1, day); // Month is zero-indexed in JS
+      if (
+        date.getFullYear() !== fullYear ||
+        date.getMonth() + 1 !== month ||
+        date.getDate() !== day
+      ) {
+        return helpers.error("any.invalid", { message: "Invalid date of birth in National ID" });
+      }
+      // Validate the governorate code
+      if (!validGovernorateCodes.includes(governorate)) {
+        return helpers.error("any.invalid", { message: "Invalid governorate code in National ID" });
+      }
+      return value; // Return the value if all validations pass
+    }, "Egyptian National ID Validation")
+    .required(),
   }).required();
 
   // get patients by id

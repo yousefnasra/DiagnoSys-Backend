@@ -1,3 +1,4 @@
+import { Examination } from "../../../DB/models/examination.model.js";
 import { Patient } from "../../../DB/models/patient.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -39,6 +40,21 @@ export const deletePatient = asyncHandler(async (req, res, next) => {
   await patient.deleteOne();
   // send Response
   return res.json({ success: true, message: "patient deleted successfully!" });
+});
+
+// get patient and examinations by national id
+export const getPatientByNationalId = asyncHandler(async (req, res, next) => {
+  // data from request
+  const { nationalId } = req.body;
+  // check patient existence
+  const patient = await Patient.findOne({ nationalId });
+  if (!patient) return next(new Error("patient not found!", { cause: 404 }));
+  // get patient examinations
+  const patientData = await Examination.find({ patientId: patient._id , status: "Completed" })
+  .select("doctorId requestTo labExaminationType radExaminationType examinationResponse updatedAt")
+  .populate("doctorId", "userName phone specialization");
+  // send Response
+  return res.json({ success: true, message: "patient retrieved successfully!", data: patient , results: patientData });
 });
 
 // get all Patients
