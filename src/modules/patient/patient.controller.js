@@ -45,7 +45,7 @@ export const deletePatient = asyncHandler(async (req, res, next) => {
 // get patient and examinations by national id
 export const getPatientByNationalId = asyncHandler(async (req, res, next) => {
   // data from request
-  const { nationalId } = req.body;
+  const { nationalId } = req.params;
   // check patient existence
   const patient = await Patient.findOne({ nationalId });
   if (!patient) return next(new Error("patient not found!", { cause: 404 }));

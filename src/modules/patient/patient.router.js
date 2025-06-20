@@ -37,7 +37,7 @@ router.delete(
 
 // get patient and examinations by national id
 router.get(
-  "/info",
+  "/info/:nationalId",
   validation(patientSchema.getPatientByNationalId),
   patientController.getPatientByNationalId
 );

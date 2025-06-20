@@ -1,6 +1,5 @@
 import joi from "joi";
 import { ObjectIdValidation } from "../../middleware/validation.middleware.js";
-import e from "express";
 
 // List of valid Egyptian governorate codes and names
 const validGovernorateCodes = [
