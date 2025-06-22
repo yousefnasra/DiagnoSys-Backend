@@ -19,10 +19,10 @@ await connectDB();
 // Set security headers using Helmet
 app.use(helmet());
 
-// Create a rate limiter specifically for the auth routes: 10 requests per 15 minutes
+// Create a rate limiter specifically for the auth routes: 100 requests per 15 minutes
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15-minute window
-    max: 10, // Limit each IP to 10 auth requests per windowMs
+    max: 100, // Limit each IP to 10 auth requests per windowMs
     handler: function (req, res, next) {
         return next(new Error("Too many requests, please try again later.", { cause: 429 }));
     }
