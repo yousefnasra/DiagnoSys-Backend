@@ -32,5 +32,4 @@ router.put('/', isAuthenticated, fileUpload().single("profileImage"), validation
 // logout
 router.get('/logout', isAuthenticated, authController.logout);
 
-
 export default router;

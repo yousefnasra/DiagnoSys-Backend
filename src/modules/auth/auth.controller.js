@@ -8,7 +8,6 @@ import { Token } from "../../../DB/models/token.model.js";
 import Randomstring from "randomstring";
 import cloudinary from "../../utils/cloud.js";
 
-
 // Register
 export const register = asyncHandler(async (req, res, next) => {
     // data from request

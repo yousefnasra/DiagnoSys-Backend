@@ -3,7 +3,6 @@ import { Token } from "../../DB/models/token.model.js";
 import { User } from "../../DB/models/user.model.js";
 import jwt from "jsonwebtoken";
 
-
 export const isAuthenticated = asyncHandler(async (req, res, next) => {
     // check token existence
     let token = req.headers["token"];

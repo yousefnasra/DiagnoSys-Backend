@@ -55,6 +55,7 @@ router.get(
   "/:id",
   isAuthenticated,
   isAuthorized("receptionist"),
+  validation(patientSchema.getPatientById),
   patientController.getPatientById
 );
 // & ================ End of Patient Routes ================ & //

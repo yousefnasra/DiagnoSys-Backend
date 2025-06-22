@@ -66,6 +66,7 @@ router.get(
   "/:id",
   isAuthenticated,
   isAuthorized("doctor"),
+  validation(appointmentSchema.getAppointmentById),
   appointmentController.getAppointmentById
 );
 

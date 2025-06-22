@@ -1,6 +1,5 @@
 import joi from "joi";
 import { ObjectIdValidation } from "../../middleware/validation.middleware.js";
-import e from "express";
 
 export const addAppointment = joi.object({
     patientId: joi.string().custom(ObjectIdValidation).required(),
