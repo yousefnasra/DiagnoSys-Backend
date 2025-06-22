@@ -1,4 +1,4 @@
-import moment from "moment";
+import moment from "moment-timezone";
 import { Schema, Types, model } from "mongoose";
 
 const appointmentSchema = new Schema(
@@ -11,7 +11,7 @@ const appointmentSchema = new Schema(
     appointmentDateTime: { type: Date, required: true }, // Automatically set based on appointmentDate and startTime
     status: {
       type: String,
-      enum: ["Scheduled","Re-Scheduled", "Completed", "Cancelled"],
+      enum: ["Scheduled", "Re-Scheduled", "Completed", "Cancelled"],
       default: "Scheduled",
     },
     visitType: { type: String, enum: ["Visit", "Re-Visit"] },
@@ -27,10 +27,15 @@ const appointmentSchema = new Schema(
   }
 );
 
- // Calculate the appointment start and end times based on the given date and start time.
- // Returns an object with appointmentStart and appointmentEnd.
-appointmentSchema.statics.calculateTimes = function (appointmentDate, startTime) {
-  const appointmentStart = moment(`${appointmentDate} ${startTime}`, "MM/DD/YYYY hh:mm A").toDate();
+// Calculate the appointment start and end times based on the given date and start time.
+// Returns an object with appointmentStart and appointmentEnd.
+appointmentSchema.statics.calculateTimes = function (
+  appointmentDate,
+  startTime
+) {
+  const appointmentStart = moment
+    .tz(`${appointmentDate} ${startTime}`, "MM/DD/YYYY hh:mm A", "Africa/Cairo")
+    .toDate();
   const appointmentEnd = new Date(appointmentStart.getTime() + 30 * 60 * 1000);
   return { appointmentStart, appointmentEnd };
 };
@@ -46,14 +51,25 @@ appointmentSchema.statics.calculateTimes = function (appointmentDate, startTime)
  *
  * Returns an object: { conflict: Boolean, type: "doctor" | "patient" }
  */
-appointmentSchema.statics.checkConflicts = async function ({ doctorId, patientId, appointmentStart, appointmentEnd, excludeId}) {
+appointmentSchema.statics.checkConflicts = async function ({
+  doctorId,
+  patientId,
+  appointmentStart,
+  appointmentEnd,
+  excludeId,
+}) {
   // Build a common conflict query using $expr to compare computed times.
   const conflictQuery = {
     status: { $ne: "Cancelled" },
     $expr: {
       $and: [
         { $lt: ["$appointmentDateTime", appointmentEnd] },
-        { $gt: [{ $add: ["$appointmentDateTime", 30 * 60 * 1000] }, appointmentStart] },
+        {
+          $gt: [
+            { $add: ["$appointmentDateTime", 30 * 60 * 1000] },
+            appointmentStart,
+          ],
+        },
       ],
     },
   };
@@ -63,32 +79,33 @@ appointmentSchema.statics.checkConflicts = async function ({ doctorId, patientId
     ...conflictQuery,
     ...(excludeId ? { _id: { $ne: excludeId } } : {}),
   });
-  if (doctorConflict)
-    return { conflict: true, type: "doctor" };
+  if (doctorConflict) return { conflict: true, type: "doctor" };
   // Check for a patient conflict.
   const patientConflict = await this.findOne({
     patientId,
     ...conflictQuery,
     ...(excludeId ? { _id: { $ne: excludeId } } : {}),
   });
-  if (patientConflict)
-    return { conflict: true, type: "patient" };
+  if (patientConflict) return { conflict: true, type: "patient" };
   // If no conflicts found, return false.
   return { conflict: false };
 };
 
 // Static method on the Appointment model for retrieving appointments using aggregation
-appointmentSchema.statics.getAppointmentsByCriteria = async function ({doctorId, date}) {
-  // Create a date range for the given day.
-  const startOfDay = moment(date).startOf("day").toDate();
-  const endOfDay = moment(date).endOf("day").toDate();
+appointmentSchema.statics.getAppointmentsByCriteria = async function ({
+  doctorId,
+  date,
+}) {
+  // Create a date range for the given day in Egypt local time.
+  const startOfDay = moment.tz(date, "Africa/Cairo").startOf("day").toDate();
+  const endOfDay = moment.tz(date, "Africa/Cairo").endOf("day").toDate();
   // Build the initial match stage: filter by appointmentDateTime within the day.
   const matchStage = {
     appointmentDateTime: { $gte: startOfDay, $lte: endOfDay },
   };
   // If a doctorId is provided, add it to the match stage.
-  if (doctorId)
-    matchStage.doctorId = new Types.ObjectId(doctorId);
+  if (doctorId) matchStage.doctorId = new Types.ObjectId(doctorId);
+
   // Construct the aggregation pipeline.
   const aggregatedAppointments = await this.aggregate([
     { $match: matchStage },
@@ -119,11 +136,11 @@ appointmentSchema.statics.getAppointmentsByCriteria = async function ({doctorId,
           $floor: {
             $divide: [
               { $subtract: [new Date(), { $toDate: "$patient.birthDate" }] },
-              1000 * 60 * 60 * 24 * 365.25
-            ]
-          }
-        }
-      }
+              1000 * 60 * 60 * 24 * 365.25,
+            ],
+          },
+        },
+      },
     },
     // Project the required fields and compute the endTime field.
     {
